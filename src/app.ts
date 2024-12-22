@@ -2,6 +2,7 @@ import { fastify } from 'fastify'
 import cookie from '@fastify/cookie'
 import { serializerCompiler, validatorCompiler, ZodTypeProvider } from 'fastify-type-provider-zod';
 import { RegisterStudentRoute } from './routes/register-student';
+import { RegisterNoteRoute } from './routes/register-notes';
 
 const app = fastify().withTypeProvider<ZodTypeProvider>();
 app.setValidatorCompiler(validatorCompiler)
@@ -13,5 +14,7 @@ app.register(cookie, {
 })
 
 app.register(RegisterStudentRoute)
+
+app.register(RegisterNoteRoute)
 
 export { app };

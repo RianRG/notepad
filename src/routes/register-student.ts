@@ -4,7 +4,7 @@ import { FastifyTypedInstance } from "../types";
 import { z } from 'zod';
 
 export async function RegisterStudentRoute(app: FastifyTypedInstance){
-    app.post('/register', {
+    app.post('/students/register', {
         schema: {
             body: z.object({
                 username: z.string(),
