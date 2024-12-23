@@ -21,9 +21,9 @@ export async function RegisterNoteRoute(app: FastifyTypedInstance){
     }, async (req, res) =>{
         const { title, content, isPrivate, studentId } = req.body;
         const prismaRepository = new PrismaService();
-        const registerNotestService = new RegisterNotesService(prismaRepository);
+        const registerNotesService = new RegisterNotesService(prismaRepository);
 
-        const notes = await registerNotestService.execute({ title, content, isPrivate, studentId })
+        const notes = await registerNotesService.execute({ title, content, isPrivate, studentId })
 
         return res.status(201).send({ msg: 'Note created succesfully!' })
     })

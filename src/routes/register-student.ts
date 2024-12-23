@@ -13,7 +13,7 @@ export async function RegisterStudentRoute(app: FastifyTypedInstance){
             }),
             response: {
                 201: z.object({
-                    msg: z.string()
+                    id: z.string()
                 })
             }
             
@@ -25,6 +25,6 @@ export async function RegisterStudentRoute(app: FastifyTypedInstance){
 
         const student = await registerStudentService.execute({ username, email, password })
 
-        return res.status(201).send({ msg: 'Student created succesfully!' })
+        return res.status(201).send({ id: student.id })
     })
 }
