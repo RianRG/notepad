@@ -16,13 +16,13 @@ export class RegisterStudentService{
       }
     })
 
-    const studentWithSameUserName = await this.prisma.student.findUnique({
+    const studentWithSameUsername = await this.prisma.student.findUnique({
       where: {
         username
       }
     })
 
-    if(studentWithSameEmail || studentWithSameUserName)
+    if(studentWithSameEmail || studentWithSameUsername)
       throw new Error('Student already exists!')
 
 
