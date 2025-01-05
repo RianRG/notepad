@@ -1,16 +1,18 @@
+import { authorizeMiddleware } from "../middlewares/authorize-middleware";
 import { PrismaService } from "../repositories/prisma/prisma-service";
+import { GetStudentBySessionIdService } from "../services/get-student-by-sessionId";
 import { RegisterNotesService } from "../services/register-notes";
 import { FastifyTypedInstance } from "../types";
 import { z } from 'zod';
 
 export async function RegisterNoteRoute(app: FastifyTypedInstance){
     app.post('/notes/register', {
+        preHandler: [authorizeMiddleware],
         schema: {
             body: z.object({
                 title: z.string(),
                 content: z.string(),
                 isPrivate: z.boolean(),
-                studentId: z.string()
             }),
             response: {
                 201: z.object({
@@ -19,11 +21,19 @@ export async function RegisterNoteRoute(app: FastifyTypedInstance){
             }
         }
     }, async (req, res) =>{
-        const { title, content, isPrivate, studentId } = req.body;
-        const prismaRepository = new PrismaService();
-        const registerNotesService = new RegisterNotesService(prismaRepository);
 
-        const notes = await registerNotesService.execute({ title, content, isPrivate, studentId })
+        const {sessionId} = req.cookies;
+        if(!sessionId) throw new Error()
+        const { title, content, isPrivate } = req.body;
+        const prismaRepository = new PrismaService();
+        const getStudentBySessionIdService = new GetStudentBySessionIdService(prismaRepository);
+        const registerNotesService = new RegisterNotesService(prismaRepository);
+        
+        const student = await getStudentBySessionIdService.execute(sessionId);
+
+        if(!student) throw new Error();
+
+        const notes = await registerNotesService.execute({ title, content, isPrivate, studentId: student.id })
 
         return res.status(201).send({ msg: 'Note created succesfully!' })
     })
