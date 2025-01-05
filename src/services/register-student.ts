@@ -3,13 +3,14 @@ import { PrismaService } from "../repositories/prisma/prisma-service";
 interface RegisterStudentDTO{
   username: string
   email: string
-  password: string
+  password: string,
+  sessionId: string
 }
 
 export class RegisterStudentService{
   constructor(private prisma: PrismaService){};
 
-  async execute({username, email, password}: RegisterStudentDTO){
+  async execute({username, email, password, sessionId}: RegisterStudentDTO){
     const studentWithSameEmail = await this.prisma.student.findUnique({
       where: {
         email
@@ -30,7 +31,8 @@ export class RegisterStudentService{
       data: {
         username,
         email,
-        password
+        password,
+        sessionId
       }
     })
   }
