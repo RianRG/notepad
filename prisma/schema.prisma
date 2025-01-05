@@ -14,19 +14,16 @@ datasource db {
 }
 
 model Student {
-  id       String @id @default(uuid())
-  email    String @unique
-  password String
-
-  username String @unique
-  notes    Note[]
+  id        String @id @default(uuid())
+  username  String @unique
+  email     String @unique
+  password  String
+  sessionId String @unique
+  notes     Note[]
 
   createdAt              DateTime        @default(now())
   friendRequestsSent     FriendRequest[] @relation("SentRequests")
   friendRequestsReceived FriendRequest[] @relation("ReceivedRequests")
-
-  friends  Student[] @relation("Friendship")
-  friendOf Student[] @relation("Friendship")
 }
 
 model Note {
@@ -42,10 +39,16 @@ model Note {
 }
 
 model FriendRequest {
-  id         String @id @default(uuid())
+  id         String      @id @default(uuid())
   senderId   String
   receiverId String
+  status     StatusTypes
+  sender     Student     @relation("SentRequests", fields: [senderId], references: [id])
+  receiver   Student     @relation("ReceivedRequests", fields: [receiverId], references: [id])
+}
 
-  sender   Student @relation("SentRequests", fields: [senderId], references: [id])
-  receiver Student @relation("ReceivedRequests", fields: [receiverId], references: [id])
+enum StatusTypes {
+  PENDING
+  ACCEPTED
+  REJECTED
 }
