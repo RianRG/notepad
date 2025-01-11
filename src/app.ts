@@ -7,10 +7,10 @@ import { RegisterNoteRoute } from './routes/register-notes';
 import { DeleteNoteRoute } from './routes/delete-note';
 import { GetNotesRoute } from './routes/get-notes';
 import { AddFriendRoute } from './routes/add-friend';
-import { BlockFriendRoute } from './routes/block-friend';
 import { GetFriendNotesRoute } from './routes/get-friend-notes';
 import { LoginStudentRoute } from './routes/login-student';
 import { GetFriendsRoute } from './routes/get-friends';
+import { UnfriendRoute } from './routes/unfriend';
 
 const app = fastify().withTypeProvider<ZodTypeProvider>();
 app.setValidatorCompiler(validatorCompiler)
@@ -35,7 +35,7 @@ app.register(RegisterNoteRoute)
 app.register(DeleteNoteRoute)
 app.register(GetNotesRoute)
 app.register(AddFriendRoute)
-app.register(BlockFriendRoute)
+app.register(UnfriendRoute)
 app.register(GetFriendNotesRoute)
 app.register(LoginStudentRoute)
 app.register(GetFriendsRoute)

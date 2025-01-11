@@ -6,7 +6,7 @@ import { FastifyTypedInstance } from "../types";
 import { z } from 'zod';
 
 export async function UnfriendRoute(app: FastifyTypedInstance){
-  app.delete('/block/:friendName', {
+  app.delete('/unfriend/:friendName', {
     preHandler: [authorizeMiddleware],
     schema: {
       params: z.object({
