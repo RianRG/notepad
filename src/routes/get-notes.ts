@@ -22,8 +22,7 @@ export async function GetNotesRoute(app: FastifyTypedInstance){
     },async (req, res) =>{
       const prismaRepository = new PrismaService();
       
-      const { sessionId } = req.cookies;
-      if(!sessionId) throw new Error()
+      const { sessionId } = req.auth;
 
       const getNotesService = new GetNotesService(prismaRepository);
       const getStudentBySessionIdService = new GetStudentBySessionIdService(prismaRepository)

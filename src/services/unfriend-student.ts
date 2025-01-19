@@ -5,7 +5,7 @@ export class UnfriendService{
 
   async execute(username: string, friendName: string){
 
-    if(username === friendName) throw new Error('You cannot block yourself!')
+    if(username === friendName) throw new Error('You cannot unfriend yourself!')
 
     const friend = await this.prisma.student.findUnique({
       where: {

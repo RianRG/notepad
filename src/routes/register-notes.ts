@@ -22,8 +22,7 @@ export async function RegisterNoteRoute(app: FastifyTypedInstance){
         }
     }, async (req, res) =>{
 
-        const {sessionId} = req.cookies;
-        if(!sessionId) throw new Error()
+        const {sessionId} = req.auth;
         const { title, content, isPrivate } = req.body;
         const prismaRepository = new PrismaService();
         const getStudentBySessionIdService = new GetStudentBySessionIdService(prismaRepository);

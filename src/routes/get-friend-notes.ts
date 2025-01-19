@@ -4,8 +4,7 @@ import { FastifyTypedInstance } from "../types";
 
 export async function GetFriendNotesRoute(app: FastifyTypedInstance){
   app.get('/friends/notes', {}, async (req, res) =>{
-    const { sessionId } = req.cookies;
-    if(!sessionId) throw new Error('Unauthorized!')
+    const { sessionId } = req.auth;
 
     const prismaRepository = new PrismaService()
     const getFriendNotesService = new GetFriendNotesService(prismaRepository)

@@ -7,8 +7,7 @@ export async function GetFriendsRoute(app: FastifyTypedInstance){
   app.get('/friends', {
     preHandler: [authorizeMiddleware]
   }, async (req, res) =>{
-    const { sessionId } = req.cookies;
-    if(!sessionId) throw new Error('Unauthorized!')
+    const { sessionId } = req.auth;
     const prismaRepository = new PrismaService();
     const getFriendsService = new GetFriendsService(prismaRepository);
 

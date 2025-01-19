@@ -1,6 +1,6 @@
 import { authorizeMiddleware } from "../middlewares/authorize-middleware";
 import { PrismaService } from "../repositories/prisma/prisma-service";
-import { UnfriendService } from "../services/unfriend";
+import { UnfriendService } from "../services/unfriend-student";
 import { GetStudentBySessionIdService } from "../services/get-student-by-sessionId";
 import { FastifyTypedInstance } from "../types";
 import { z } from 'zod';
@@ -17,10 +17,9 @@ export async function UnfriendRoute(app: FastifyTypedInstance){
       })
     }
   }, async (req, res) =>{
-    const { sessionId } = req.cookies;
+    const { sessionId } = req.auth;
     const { friendName } = req.params;
     
-    if(!sessionId) throw new Error('Unauthorized!')
 
     const prismaRepository = new PrismaService()
     const unfriendService = new UnfriendService(prismaRepository)
@@ -32,6 +31,6 @@ export async function UnfriendRoute(app: FastifyTypedInstance){
 
     await unfriendService.execute(student.username, friendName)
 
-    return res.status(200).send({ msg: 'Student blocked succesfully!' })
+    return res.status(200).send({ msg: 'Student unfriended succesfully!' })
   })
 }

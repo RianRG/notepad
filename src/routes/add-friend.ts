@@ -20,9 +20,7 @@ export async function AddFriendRoute(app: FastifyTypedInstance){
     }
   }, async (req, res) =>{
     const { friendName } = req.params;
-    const { sessionId } = req.cookies;
-    if(!sessionId)
-      throw new Error('Unauthorized!')
+    const { sessionId } = req.auth;
     
     const prismaRepository = new PrismaService();
     const getStudentBySessionIdService = new GetStudentBySessionIdService(prismaRepository);

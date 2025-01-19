@@ -67,14 +67,19 @@ export class AddFriendService{
     })
     if(isAlreadyReceived.length>0){
 
-      await this.prisma.friendRequest.update({
-        where: {
-          id: isAlreadyReceived[0].id
-        },
-        data: {
-          status: "ACCEPTED"
-        }
-      })
+      if(isAlreadyReceived[0].status!=="REJECTED"){
+        await this.prisma.friendRequest.update({
+          where: {
+            id: isAlreadyReceived[0].id
+          },
+          data: {
+            status: "ACCEPTED"
+          }
+        })
+      } else{
+        throw new Error(`Unfortunately, this friendship is BLOCKED :(`)
+      }
+      
      
      return 2;
     }
