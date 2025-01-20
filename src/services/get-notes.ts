@@ -11,7 +11,7 @@ export class GetNotesService{
     })
 
     const parsedNotes = notes.map(note =>{
-      const {id, studentId, ...restOfAll} = note
+      const {studentId, ...restOfAll} = note
 
       return restOfAll;
     })
