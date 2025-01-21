@@ -14,11 +14,13 @@ export async function RegisterNoteRoute(app: FastifyTypedInstance){
                 content: z.string(),
                 isPrivate: z.boolean(),
             }),
-            response: {
-                201: z.object({
-                    msg: z.string()
-                })
-            }
+            // response: {
+            //     201: z.object({
+            //         notes: z.object({
+                      
+            //         })
+            //     })
+            // }
         }
     }, async (req, res) =>{
 
@@ -34,6 +36,6 @@ export async function RegisterNoteRoute(app: FastifyTypedInstance){
 
         const notes = await registerNotesService.execute({ title, content, isPrivate, studentId: student.id })
 
-        return res.status(201).send({ msg: 'Note created succesfully!' })
+        return res.status(201).send({ notes })
     })
 }

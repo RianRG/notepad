@@ -7,6 +7,9 @@ export class GetNotesService{
     const notes = await this.prisma.note.findMany({
       where: {
         studentId
+      },
+      orderBy: {
+        createdAt: 'desc'
       }
     })
 
