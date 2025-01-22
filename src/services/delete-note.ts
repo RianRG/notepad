@@ -7,6 +7,7 @@ export class DeleteNoteService{
     const note = await this.prisma.note.findUnique({
       where: {
         id: noteId,
+        
       }
     })
 

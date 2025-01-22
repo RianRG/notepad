@@ -15,6 +15,7 @@ import { UnfriendRoute } from './routes/unfriend-student';
 import { BlockFriendRoute } from './routes/block-friend';
 import { GetSessionRoute } from './routes/get-session';
 import { UpdateNoteRoute } from './routes/update-note';
+import { GetFriendRequestsRoute } from './routes/get-friend-requests';
 
 const app = fastify().withTypeProvider<ZodTypeProvider>();
 app.setValidatorCompiler(validatorCompiler)
@@ -51,5 +52,6 @@ app.register(GetFriendsRoute)
 app.register(BlockFriendRoute)
 app.register(GetSessionRoute)
 app.register(UpdateNoteRoute)
+app.register(GetFriendRequestsRoute)
 
 export { app };
