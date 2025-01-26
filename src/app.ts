@@ -37,7 +37,7 @@ app.addHook('preHandler', (req, res, done) =>{
 })
 
 app.register(cors, {
-  origin: 'http://localhost:4200',
+  origin: 'https://notepad-frontend-i921.onrender.com',
   credentials: true,
 })
 
