@@ -32,6 +32,7 @@ export async function RegisterStudentRoute(app: FastifyTypedInstance){
             path: '/',
             httpOnly: true,
             signed: true,
+            sameSite: 'none',
             maxAge: 1000 * 3600 * 24 * 7 // 7 days
         })
         const cookie = app.signCookie(sessionId)
