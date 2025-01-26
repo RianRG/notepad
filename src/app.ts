@@ -28,7 +28,7 @@ app.register(cookie, {
 })
 
 app.register(jwt, {
-    secret: process.env.COOKIE_SECRET!
+    secret: process.env.COOKIE_SECRET!,
 })
 
 app.addHook('preHandler', (req, res, done) =>{
@@ -39,6 +39,8 @@ app.addHook('preHandler', (req, res, done) =>{
 app.register(cors, {
   origin: 'http://localhost:4200',
   credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  exposedHeaders: ['*', 'Authorization']
 })
 
 app.register(RegisterStudentRoute)
