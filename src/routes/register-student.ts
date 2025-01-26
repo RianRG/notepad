@@ -32,6 +32,7 @@ export async function RegisterStudentRoute(app: FastifyTypedInstance){
             path: '/',
             httpOnly: true,
             signed: true,
+            domain: 'https://notepad-jnn2.onrender.com' ,
             sameSite: 'none',
             secure: true,
             maxAge: 1000 * 3600 * 24 * 7 // 7 days
