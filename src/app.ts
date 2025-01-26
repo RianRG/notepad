@@ -39,8 +39,6 @@ app.addHook('preHandler', (req, res, done) =>{
 app.register(cors, {
   origin: 'http://localhost:4200',
   credentials: true,
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  exposedHeaders: ['*', 'Authorization']
 })
 
 app.register(RegisterStudentRoute)
