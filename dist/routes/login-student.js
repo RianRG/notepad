@@ -117,6 +117,8 @@ function LoginStudentRoute(app) {
         path: "/",
         httpOnly: true,
         signed: true,
+        sameSite: "none",
+        secure: true,
         maxAge: 1e3 * 3600 * 24 * 7
         // 7 days
       });

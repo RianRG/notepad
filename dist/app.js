@@ -140,6 +140,8 @@ function RegisterStudentRoute(app2) {
         path: "/",
         httpOnly: true,
         signed: true,
+        sameSite: "none",
+        secure: true,
         maxAge: 1e3 * 3600 * 24 * 7
         // 7 days
       });
@@ -595,6 +597,8 @@ function LoginStudentRoute(app2) {
         path: "/",
         httpOnly: true,
         signed: true,
+        sameSite: "none",
+        secure: true,
         maxAge: 1e3 * 3600 * 24 * 7
         // 7 days
       });
