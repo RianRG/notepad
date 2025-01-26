@@ -24,7 +24,6 @@ app.setSerializerCompiler(serializerCompiler)
 
 app.register(cookie, {
     secret: process.env.COOKIE_SECRET,
-    hook: 'onRequest',
 })
 
 app.register(jwt, {
