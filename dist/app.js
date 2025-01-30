@@ -77,7 +77,13 @@ var import_fastify_type_provider_zod = require("fastify-type-provider-zod");
 var import_client = require("@prisma/client");
 var PrismaService = class extends import_client.PrismaClient {
   constructor() {
-    super();
+    super({
+      datasources: {
+        db: {
+          url: process.env.NODE_ENV === "production" ? process.env.DATABASE_URL : "postgresql://admin:admin@localhost:5432/mypostgres?schema=public"
+        }
+      }
+    });
   }
 };
 
@@ -1024,7 +1030,7 @@ app.addHook("preHandler", (req, res, done) => {
   return done();
 });
 app.register(import_cors.default, {
-  origin: process.env.NODE_ENV === "development" ? "https://notepad-frontend-i921.onrender.com" : "http://localhost:4000",
+  origin: process.env.NODE_ENV === "production" ? "https://notepad-frontend-i921.onrender.com" : "http://localhost:4200",
   credentials: true
 });
 app.register(RegisterStudentRoute);

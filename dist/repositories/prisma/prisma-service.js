@@ -26,7 +26,13 @@ module.exports = __toCommonJS(prisma_service_exports);
 var import_client = require("@prisma/client");
 var PrismaService = class extends import_client.PrismaClient {
   constructor() {
-    super();
+    super({
+      datasources: {
+        db: {
+          url: process.env.NODE_ENV === "production" ? process.env.DATABASE_URL : "postgresql://admin:admin@localhost:5432/mypostgres?schema=public"
+        }
+      }
+    });
   }
 };
 // Annotate the CommonJS export names for ESM import in node:

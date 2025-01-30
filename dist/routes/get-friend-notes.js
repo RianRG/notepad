@@ -48,7 +48,13 @@ module.exports = __toCommonJS(get_friend_notes_exports);
 var import_client = require("@prisma/client");
 var PrismaService = class extends import_client.PrismaClient {
   constructor() {
-    super();
+    super({
+      datasources: {
+        db: {
+          url: process.env.NODE_ENV === "production" ? process.env.DATABASE_URL : "postgresql://admin:admin@localhost:5432/mypostgres?schema=public"
+        }
+      }
+    });
   }
 };
 
