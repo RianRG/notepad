@@ -1024,7 +1024,7 @@ app.addHook("preHandler", (req, res, done) => {
   return done();
 });
 app.register(import_cors.default, {
-  origin: "https://notepad-frontend-i921.onrender.com",
+  origin: process.env.NODE_ENV === "development" ? "https://notepad-frontend-i921.onrender.com" : "http://localhost:4000",
   credentials: true
 });
 app.register(RegisterStudentRoute);
