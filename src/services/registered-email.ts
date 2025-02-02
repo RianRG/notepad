@@ -7,6 +7,7 @@ export class RegisteredEmailService{
     console.log(`${process.env.EMAIL_USER}, ${process.env.EMAIL_PASSWORD}`)
     const transporter = nodemailer.createTransport({
       service: "gmail",
+      host: 'smtp.gmail.com',
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASSWORD,
