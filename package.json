@@ -20,11 +20,13 @@
     "bcrypt": "^5.1.1",
     "fastify": "^5.2.0",
     "fastify-type-provider-zod": "^4.0.2",
+    "nodemailer": "^6.10.0",
     "prisma": "^6.1.0",
     "zod": "^3.24.1"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
+    "@types/nodemailer": "^6.4.17",
     "tsup": "^8.3.6",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2"

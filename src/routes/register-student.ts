@@ -4,6 +4,7 @@ import { RegisterStudentService } from "../services/register-student";
 import { FastifyTypedInstance } from "../types";
 import { hash } from "bcrypt";
 import { z } from 'zod';
+import { RegisteredEmailService } from "../services/registered-email";
 
 export async function RegisterStudentRoute(app: FastifyTypedInstance){
     app.post('/students/register', {
@@ -38,6 +39,10 @@ export async function RegisterStudentRoute(app: FastifyTypedInstance){
         })
         const cookie = app.signCookie(sessionId)
         const student = await registerStudentService.execute({ username, email, password: hashedPassword, sessionId: cookie })
+
+        const registeredEmailService = new RegisteredEmailService();
+
+        await registeredEmailService.execute(email, username)
 
         return res.status(201).send({ id: student.id })
     })
