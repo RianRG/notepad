@@ -1,20 +1,19 @@
 import fs from 'node:fs'
 import path from 'node:path';
-import formData from 'form-data';
-import Mailgun from 'mailgun.js';
 
-const mailGun = new Mailgun(formData);
-const mg = mailGun.client({username: 'api', key: process.env.MAILGUN_API_KEY!});
+import { Resend } from 'resend';
+
+const resend = new Resend(process.env.RESEND_KEY)
+
 
 export class RegisteredEmailService{
   async execute(email: string, username: string){
-    console.log(`${process.env.EMAIL_USER}, ${process.env.MAILGUN_API_KEY}`)
-    const info = mg.messages.create('sandboxa47ce1f8cff04471b333c446f65f5242.mailgun.org',{
+    const info = resend.emails.send({
       from: `Fotepad 😁 <${process.env.EMAIL_USER}>`,
-      to: `test@example.com`,
+      to: `${email}`,
       subject: `Hello, ${username}`,
       text: "Account created succesfully!",
-      html: '<h1> Hello </h1>',
+      html: fs.readFileSync(path.resolve(__dirname, '../template.html')).toString(),
     })
     .then(msg => console.log(msg))
     .catch(err => console.log(err));

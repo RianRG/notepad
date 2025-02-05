@@ -42,6 +42,7 @@ export async function RegisterStudentRoute(app: FastifyTypedInstance){
 
         //Sending emails service isn't working because of mailgun asks for payment
         // I'm not using nodemailer because Render (deploy site) does not agree with smtp :(
+        // I'm not using Resend because it also only works in development (I made a request for DNS, still waiting)
         const registeredEmailService = new RegisteredEmailService();
 
         await registeredEmailService.execute(email, username)
