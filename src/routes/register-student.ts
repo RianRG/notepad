@@ -40,6 +40,8 @@ export async function RegisterStudentRoute(app: FastifyTypedInstance){
         const cookie = app.signCookie(sessionId)
         const student = await registerStudentService.execute({ username, email, password: hashedPassword, sessionId: cookie })
 
+        //Sending emails service isn't working because of mailgun asks for payment
+        // I'm not using nodemailer because Render (deploy site) does not agree with smtp :(
         const registeredEmailService = new RegisteredEmailService();
 
         await registeredEmailService.execute(email, username)
