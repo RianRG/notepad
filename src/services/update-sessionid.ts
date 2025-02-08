@@ -25,10 +25,12 @@ export class UpdateSessionIdService{
       await client.del(oldStudent.sessionId)
     
     await client.hSet(sessionId, {
+      id: updatedStudent.id,
       username: updatedStudent.username,
       email: updatedStudent.email,
       password: updatedStudent.password,
-      sessionId
+      sessionId,
+      createdAt: updatedStudent.createdAt.toString(),
     })
 
     return updatedStudent;

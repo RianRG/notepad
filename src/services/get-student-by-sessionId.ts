@@ -8,6 +8,7 @@ export class GetStudentBySessionIdService{
   async execute(sessionId: string){
 
     const cachedStudent = await client.hGetAll(sessionId)
+    console.log(cachedStudent)
     if(cachedStudent)
       return cachedStudent;
 
