@@ -208,6 +208,7 @@ var GetStudentBySessionIdService = class {
   }
   async execute(sessionId) {
     const cachedStudent = await client.hGetAll(sessionId);
+    console.log(cachedStudent);
     if (cachedStudent)
       return cachedStudent;
     const student = await this.prisma.student.findUnique({
@@ -590,10 +591,12 @@ var UpdateSessionIdService = class {
     if (await client.hGetAll(oldStudent.sessionId))
       await client.del(oldStudent.sessionId);
     await client.hSet(sessionId, {
+      id: updatedStudent.id,
       username: updatedStudent.username,
       email: updatedStudent.email,
       password: updatedStudent.password,
-      sessionId
+      sessionId,
+      createdAt: updatedStudent.createdAt.toString()
     });
     return updatedStudent;
   }

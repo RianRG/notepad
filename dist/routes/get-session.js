@@ -58,6 +58,7 @@ var GetStudentBySessionIdService = class {
   }
   async execute(sessionId) {
     const cachedStudent = await client.hGetAll(sessionId);
+    console.log(cachedStudent);
     if (cachedStudent)
       return cachedStudent;
     const student = await this.prisma.student.findUnique({
