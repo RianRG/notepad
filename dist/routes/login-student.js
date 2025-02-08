@@ -91,7 +91,8 @@ var UpdateSessionIdService = class {
         sessionId
       }
     });
-    await client.del(oldStudent.sessionId);
+    if (await client.hGetAll(oldStudent.sessionId))
+      await client.del(oldStudent.sessionId);
     await client.hSet(sessionId, {
       username: updatedStudent.username,
       email: updatedStudent.email,
