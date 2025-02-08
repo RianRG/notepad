@@ -1,7 +1,12 @@
 # Fotepad
 
 This is fotepad, an online notepad to register your goals, make a shopping list, list your favorite musics, and anything else you need. You can show your notes to your friends and let them see yours (Only if you want to)
-https://github.com/user-attachments/assets/e6e7f5f7-61b7-4933-aad9-c916b796cb88
+
+
+
+https://github.com/user-attachments/assets/b06e086e-1ab8-44d0-b325-a2c55e96be00
+
+
 
 ## Description
 (I'm going to talk about backend and frontend on this README.md file, the other repository (notepad-frontend) is just for deployment settings)
