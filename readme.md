@@ -45,7 +45,9 @@ After all, now you can run our amazing backend with this simple command:
 ```
 pnpm run dev
 ```
-backend deploy: https://notepad-jnn2.onrender.com
-frontend deploy: https://notepad-frontend-i921.onrender.com/register
+* backend deploy: https://notepad-jnn2.onrender.com
+* frontend deploy: https://notepad-frontend-i921.onrender.com/register
+
+
 
 Thank you <3
