@@ -16,26 +16,6 @@ var __copyProps = (to, from, except, desc) => {
   return to;
 };
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-var __async = (__this, __arguments, generator) => {
-  return new Promise((resolve, reject) => {
-    var fulfilled = (value) => {
-      try {
-        step(generator.next(value));
-      } catch (e) {
-        reject(e);
-      }
-    };
-    var rejected = (value) => {
-      try {
-        step(generator.throw(value));
-      } catch (e) {
-        reject(e);
-      }
-    };
-    var step = (x) => x.done ? resolve(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
-    step((generator = generator.apply(__this, __arguments)).next());
-  });
-};
 
 // src/routes/update-note.ts
 var update_note_exports = {};
@@ -79,51 +59,47 @@ var UpdateNoteService = class {
   constructor(prisma) {
     this.prisma = prisma;
   }
-  execute(noteId, data) {
-    return __async(this, null, function* () {
-      return yield this.prisma.note.update({
-        where: {
-          id: noteId
-        },
-        data: {
-          title: data.title,
-          content: data.content,
-          isPrivate: data.isPrivate
-        }
-      });
+  async execute(noteId, data) {
+    return await this.prisma.note.update({
+      where: {
+        id: noteId
+      },
+      data: {
+        title: data.title,
+        content: data.content,
+        isPrivate: data.isPrivate
+      }
     });
   }
 };
 
 // src/routes/update-note.ts
-function UpdateNoteRoute(app) {
-  return __async(this, null, function* () {
-    app.put(
-      "/notes/:noteId",
-      {
-        preHandler: [authorizeMiddleware],
-        schema: {
-          body: import_zod.z.object({
-            title: import_zod.z.string(),
-            content: import_zod.z.string(),
-            isPrivate: import_zod.z.boolean()
-          }),
-          params: import_zod.z.object({
-            noteId: import_zod.z.string()
-          })
-        }
-      },
-      (req, res) => __async(this, null, function* () {
-        const { sessionId } = req.auth;
-        const { noteId } = req.params;
-        const { title, content, isPrivate } = req.body;
-        const prismaRepository = new PrismaService();
-        const updateNoteService = new UpdateNoteService(prismaRepository);
-        const note = yield updateNoteService.execute(noteId, { title, content, isPrivate });
-        return res.status(201).send({ note });
-      })
-    );
-  });
+async function UpdateNoteRoute(app) {
+  app.put(
+    "/notes/:noteId",
+    {
+      preHandler: [authorizeMiddleware],
+      schema: {
+        body: import_zod.z.object({
+          title: import_zod.z.string(),
+          content: import_zod.z.string(),
+          isPrivate: import_zod.z.boolean()
+        }),
+        params: import_zod.z.object({
+          noteId: import_zod.z.string()
+        })
+      }
+    },
+    async (req, res) => {
+      const { sessionId } = req.auth;
+      const { noteId } = req.params;
+      const { title, content, isPrivate } = req.body;
+      const prismaRepository = new PrismaService();
+      const updateNoteService = new UpdateNoteService(prismaRepository);
+      const note = await updateNoteService.execute(noteId, { title, content, isPrivate });
+      return res.status(201).send({ note });
+    }
+  );
 }
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {

@@ -16,26 +16,6 @@ var __copyProps = (to, from, except, desc) => {
   return to;
 };
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-var __async = (__this, __arguments, generator) => {
-  return new Promise((resolve, reject) => {
-    var fulfilled = (value) => {
-      try {
-        step(generator.next(value));
-      } catch (e) {
-        reject(e);
-      }
-    };
-    var rejected = (value) => {
-      try {
-        step(generator.throw(value));
-      } catch (e) {
-        reject(e);
-      }
-    };
-    var step = (x) => x.done ? resolve(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
-    step((generator = generator.apply(__this, __arguments)).next());
-  });
-};
 
 // src/services/get-student-by-username.ts
 var get_student_by_username_exports = {};
@@ -47,48 +27,46 @@ var GetStudentByUsernameService = class {
   constructor(prisma) {
     this.prisma = prisma;
   }
-  execute(username) {
-    return __async(this, null, function* () {
-      const student = yield this.prisma.student.findUnique({
-        where: {
-          username
+  async execute(username) {
+    const student = await this.prisma.student.findUnique({
+      where: {
+        username
+      },
+      include: {
+        notes: {
+          where: {
+            isPrivate: false
+          }
         },
-        include: {
-          notes: {
-            where: {
-              isPrivate: false
-            }
-          },
-          _count: {
-            select: {
-              friendRequestsReceived: {
-                where: {
-                  status: "ACCEPTED"
-                }
-              },
-              friendRequestsSent: {
-                where: {
-                  status: "ACCEPTED"
-                }
+        _count: {
+          select: {
+            friendRequestsReceived: {
+              where: {
+                status: "ACCEPTED"
+              }
+            },
+            friendRequestsSent: {
+              where: {
+                status: "ACCEPTED"
               }
             }
           }
         }
-      });
-      if (!student)
-        throw new Error("Student not found!");
-      const studentWithFriends = {
-        id: student.id,
-        sessionId: student.sessionId,
-        username: student.username,
-        email: student.email,
-        password: student.password,
-        createdAt: student.createdAt,
-        notes: student.notes,
-        friends: student._count.friendRequestsReceived + student._count.friendRequestsSent
-      };
-      return studentWithFriends;
+      }
     });
+    if (!student)
+      throw new Error("Student not found!");
+    const studentWithFriends = {
+      id: student.id,
+      sessionId: student.sessionId,
+      username: student.username,
+      email: student.email,
+      password: student.password,
+      createdAt: student.createdAt,
+      notes: student.notes,
+      friends: student._count.friendRequestsReceived + student._count.friendRequestsSent
+    };
+    return studentWithFriends;
   }
 };
 // Annotate the CommonJS export names for ESM import in node:

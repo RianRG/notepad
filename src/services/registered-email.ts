@@ -13,7 +13,17 @@ export class RegisteredEmailService{
       to: `${email}`,
       subject: `Hello, ${username}`,
       text: "Account created succesfully!",
-      html: fs.readFileSync(path.resolve(__dirname, '../template.html')).toString(),
+      html: `
+      <html>
+        <head>
+          <meta charset="UTF-8">
+        </head>
+        <body>
+          <h1>Congratulations, your account was succesfully created!</h1>
+          <p>Now you can prove the max efficiency of your notes, welcome to Fotepad!</p>
+        </body>
+      </html>
+      `,
     })
     .then(msg => console.log(msg))
     .catch(err => console.log(err));

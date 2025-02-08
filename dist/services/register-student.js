@@ -16,26 +16,6 @@ var __copyProps = (to, from, except, desc) => {
   return to;
 };
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-var __async = (__this, __arguments, generator) => {
-  return new Promise((resolve, reject) => {
-    var fulfilled = (value) => {
-      try {
-        step(generator.next(value));
-      } catch (e) {
-        reject(e);
-      }
-    };
-    var rejected = (value) => {
-      try {
-        step(generator.throw(value));
-      } catch (e) {
-        reject(e);
-      }
-    };
-    var step = (x) => x.done ? resolve(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
-    step((generator = generator.apply(__this, __arguments)).next());
-  });
-};
 
 // src/services/register-student.ts
 var register_student_exports = {};
@@ -43,33 +23,54 @@ __export(register_student_exports, {
   RegisterStudentService: () => RegisterStudentService
 });
 module.exports = __toCommonJS(register_student_exports);
+
+// src/lib/redis.ts
+var import_redis = require("redis");
+var client = (0, import_redis.createClient)({
+  username: "default",
+  password: process.env.REDIS_PASSWORD,
+  socket: {
+    host: process.env.REDIS_HOST,
+    port: +process.env.REDIS_PORT
+  }
+});
+client.on("error", (err) => console.log("Redis Client Error:: ", err));
+client.connect();
+
+// src/services/register-student.ts
 var RegisterStudentService = class {
   constructor(prisma) {
     this.prisma = prisma;
   }
-  execute(_0) {
-    return __async(this, arguments, function* ({ username, email, password, sessionId }) {
-      const studentWithSameEmail = yield this.prisma.student.findUnique({
-        where: {
-          email
-        }
-      });
-      const studentWithSameUsername = yield this.prisma.student.findUnique({
-        where: {
-          username
-        }
-      });
-      if (studentWithSameEmail || studentWithSameUsername)
-        throw new Error("Student already exists!");
-      return yield this.prisma.student.create({
-        data: {
-          username,
-          email,
-          password,
-          sessionId
-        }
-      });
+  async execute({ username, email, password, sessionId }) {
+    const studentWithSameEmail = await this.prisma.student.findUnique({
+      where: {
+        email
+      }
     });
+    const studentWithSameUsername = await this.prisma.student.findUnique({
+      where: {
+        username
+      }
+    });
+    if (studentWithSameEmail || studentWithSameUsername)
+      throw new Error("Student already exists!");
+    const student = await this.prisma.student.create({
+      data: {
+        username,
+        email,
+        password,
+        sessionId
+      }
+    });
+    await client.hSet(sessionId, {
+      id: student.id,
+      username,
+      email,
+      password,
+      createdAt: student.createdAt.toString()
+    });
+    return student;
   }
 };
 // Annotate the CommonJS export names for ESM import in node:

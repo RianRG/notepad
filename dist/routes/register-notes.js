@@ -16,26 +16,6 @@ var __copyProps = (to, from, except, desc) => {
   return to;
 };
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-var __async = (__this, __arguments, generator) => {
-  return new Promise((resolve, reject) => {
-    var fulfilled = (value) => {
-      try {
-        step(generator.next(value));
-      } catch (e) {
-        reject(e);
-      }
-    };
-    var rejected = (value) => {
-      try {
-        step(generator.throw(value));
-      } catch (e) {
-        reject(e);
-      }
-    };
-    var step = (x) => x.done ? resolve(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
-    step((generator = generator.apply(__this, __arguments)).next());
-  });
-};
 
 // src/routes/register-notes.ts
 var register_notes_exports = {};
@@ -73,21 +53,35 @@ var PrismaService = class extends import_client.PrismaClient {
   }
 };
 
+// src/lib/redis.ts
+var import_redis = require("redis");
+var client = (0, import_redis.createClient)({
+  username: "default",
+  password: process.env.REDIS_PASSWORD,
+  socket: {
+    host: process.env.REDIS_HOST,
+    port: +process.env.REDIS_PORT
+  }
+});
+client.on("error", (err) => console.log("Redis Client Error:: ", err));
+client.connect();
+
 // src/services/get-student-by-sessionId.ts
 var GetStudentBySessionIdService = class {
   constructor(prisma) {
     this.prisma = prisma;
   }
-  execute(sessionId) {
-    return __async(this, null, function* () {
-      const student = yield this.prisma.student.findUnique({
-        where: {
-          sessionId
-        }
-      });
-      if (!student) throw new Error();
-      return student;
+  async execute(sessionId) {
+    const cachedStudent = await client.hGetAll(sessionId);
+    if (cachedStudent)
+      return cachedStudent;
+    const student = await this.prisma.student.findUnique({
+      where: {
+        sessionId
+      }
     });
+    if (!student) throw new Error();
+    return student;
   }
 };
 
@@ -96,50 +90,46 @@ var RegisterNotesService = class {
   constructor(prisma) {
     this.prisma = prisma;
   }
-  execute(_0) {
-    return __async(this, arguments, function* ({ title, content, isPrivate, studentId }) {
-      return yield this.prisma.note.create({
-        data: {
-          title,
-          content,
-          isPrivate,
-          studentId
-        }
-      });
+  async execute({ title, content, isPrivate, studentId }) {
+    return await this.prisma.note.create({
+      data: {
+        title,
+        content,
+        isPrivate,
+        studentId
+      }
     });
   }
 };
 
 // src/routes/register-notes.ts
 var import_zod = require("zod");
-function RegisterNoteRoute(app) {
-  return __async(this, null, function* () {
-    app.post("/notes/register", {
-      preHandler: [authorizeMiddleware],
-      schema: {
-        body: import_zod.z.object({
-          title: import_zod.z.string(),
-          content: import_zod.z.string(),
-          isPrivate: import_zod.z.boolean()
-        })
-        // response: {
-        //     201: z.object({
-        //         notes: z.object({
-        //         })
-        //     })
-        // }
-      }
-    }, (req, res) => __async(this, null, function* () {
-      const { sessionId } = req.auth;
-      const { title, content, isPrivate } = req.body;
-      const prismaRepository = new PrismaService();
-      const getStudentBySessionIdService = new GetStudentBySessionIdService(prismaRepository);
-      const registerNotesService = new RegisterNotesService(prismaRepository);
-      const student = yield getStudentBySessionIdService.execute(sessionId);
-      if (!student) throw new Error();
-      const notes = yield registerNotesService.execute({ title, content, isPrivate, studentId: student.id });
-      return res.status(201).send({ notes });
-    }));
+async function RegisterNoteRoute(app) {
+  app.post("/notes/register", {
+    preHandler: [authorizeMiddleware],
+    schema: {
+      body: import_zod.z.object({
+        title: import_zod.z.string(),
+        content: import_zod.z.string(),
+        isPrivate: import_zod.z.boolean()
+      })
+      // response: {
+      //     201: z.object({
+      //         notes: z.object({
+      //         })
+      //     })
+      // }
+    }
+  }, async (req, res) => {
+    const { sessionId } = req.auth;
+    const { title, content, isPrivate } = req.body;
+    const prismaRepository = new PrismaService();
+    const getStudentBySessionIdService = new GetStudentBySessionIdService(prismaRepository);
+    const registerNotesService = new RegisterNotesService(prismaRepository);
+    const student = await getStudentBySessionIdService.execute(sessionId);
+    if (!student) throw new Error();
+    const notes = await registerNotesService.execute({ title, content, isPrivate, studentId: student.id });
+    return res.status(201).send({ notes });
   });
 }
 // Annotate the CommonJS export names for ESM import in node:

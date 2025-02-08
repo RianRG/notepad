@@ -16,26 +16,6 @@ var __copyProps = (to, from, except, desc) => {
   return to;
 };
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-var __async = (__this, __arguments, generator) => {
-  return new Promise((resolve, reject) => {
-    var fulfilled = (value) => {
-      try {
-        step(generator.next(value));
-      } catch (e) {
-        reject(e);
-      }
-    };
-    var rejected = (value) => {
-      try {
-        step(generator.throw(value));
-      } catch (e) {
-        reject(e);
-      }
-    };
-    var step = (x) => x.done ? resolve(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
-    step((generator = generator.apply(__this, __arguments)).next());
-  });
-};
 
 // src/services/get-friend-requests.ts
 var get_friend_requests_exports = {};
@@ -47,23 +27,21 @@ var GetFriendRequestsService = class {
   constructor(prisma) {
     this.prisma = prisma;
   }
-  execute(sessionId) {
-    return __async(this, null, function* () {
-      return yield this.prisma.friendRequest.findMany({
-        where: {
-          receiver: {
-            sessionId
-          },
-          status: "PENDING"
+  async execute(sessionId) {
+    return await this.prisma.friendRequest.findMany({
+      where: {
+        receiver: {
+          sessionId
         },
-        include: {
-          sender: {
-            select: {
-              username: true
-            }
+        status: "PENDING"
+      },
+      include: {
+        sender: {
+          select: {
+            username: true
           }
         }
-      });
+      }
     });
   }
 };

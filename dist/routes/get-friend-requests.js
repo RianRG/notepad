@@ -16,26 +16,6 @@ var __copyProps = (to, from, except, desc) => {
   return to;
 };
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-var __async = (__this, __arguments, generator) => {
-  return new Promise((resolve, reject) => {
-    var fulfilled = (value) => {
-      try {
-        step(generator.next(value));
-      } catch (e) {
-        reject(e);
-      }
-    };
-    var rejected = (value) => {
-      try {
-        step(generator.throw(value));
-      } catch (e) {
-        reject(e);
-      }
-    };
-    var step = (x) => x.done ? resolve(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
-    step((generator = generator.apply(__this, __arguments)).next());
-  });
-};
 
 // src/routes/get-friend-requests.ts
 var get_friend_requests_exports = {};
@@ -78,39 +58,35 @@ var GetFriendRequestsService = class {
   constructor(prisma) {
     this.prisma = prisma;
   }
-  execute(sessionId) {
-    return __async(this, null, function* () {
-      return yield this.prisma.friendRequest.findMany({
-        where: {
-          receiver: {
-            sessionId
-          },
-          status: "PENDING"
+  async execute(sessionId) {
+    return await this.prisma.friendRequest.findMany({
+      where: {
+        receiver: {
+          sessionId
         },
-        include: {
-          sender: {
-            select: {
-              username: true
-            }
+        status: "PENDING"
+      },
+      include: {
+        sender: {
+          select: {
+            username: true
           }
         }
-      });
+      }
     });
   }
 };
 
 // src/routes/get-friend-requests.ts
-function GetFriendRequestsRoute(app) {
-  return __async(this, null, function* () {
-    app.get("/friendRequests", {
-      preHandler: [authorizeMiddleware]
-    }, (req, res) => __async(this, null, function* () {
-      const { sessionId } = req.auth;
-      const prismaRepository = new PrismaService();
-      const getFriendRequestsService = new GetFriendRequestsService(prismaRepository);
-      const friendRequests = yield getFriendRequestsService.execute(sessionId);
-      return res.status(200).send({ friendRequests });
-    }));
+async function GetFriendRequestsRoute(app) {
+  app.get("/friendRequests", {
+    preHandler: [authorizeMiddleware]
+  }, async (req, res) => {
+    const { sessionId } = req.auth;
+    const prismaRepository = new PrismaService();
+    const getFriendRequestsService = new GetFriendRequestsService(prismaRepository);
+    const friendRequests = await getFriendRequestsService.execute(sessionId);
+    return res.status(200).send({ friendRequests });
   });
 }
 // Annotate the CommonJS export names for ESM import in node:

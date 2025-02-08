@@ -16,26 +16,6 @@ var __copyProps = (to, from, except, desc) => {
   return to;
 };
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-var __async = (__this, __arguments, generator) => {
-  return new Promise((resolve, reject) => {
-    var fulfilled = (value) => {
-      try {
-        step(generator.next(value));
-      } catch (e) {
-        reject(e);
-      }
-    };
-    var rejected = (value) => {
-      try {
-        step(generator.throw(value));
-      } catch (e) {
-        reject(e);
-      }
-    };
-    var step = (x) => x.done ? resolve(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
-    step((generator = generator.apply(__this, __arguments)).next());
-  });
-};
 
 // src/services/get-friend-notes.ts
 var get_friend_notes_exports = {};
@@ -47,59 +27,57 @@ var GetFriendNotesService = class {
   constructor(prisma) {
     this.prisma = prisma;
   }
-  execute(sessionId) {
-    return __async(this, null, function* () {
-      const student = yield this.prisma.student.findUnique({
-        where: {
-          sessionId
-        }
-      });
-      if (!student) throw new Error("Student not found!");
-      const friendRequests = yield this.prisma.friendRequest.findMany({
-        where: {
-          OR: [
-            {
-              receiverId: student.id,
-              status: "ACCEPTED"
-            },
-            {
-              senderId: student.id,
-              status: "ACCEPTED"
-            }
-          ]
-        },
-        include: {
-          receiver: {
-            include: {
-              notes: true
-            }
+  async execute(sessionId) {
+    const student = await this.prisma.student.findUnique({
+      where: {
+        sessionId
+      }
+    });
+    if (!student) throw new Error("Student not found!");
+    const friendRequests = await this.prisma.friendRequest.findMany({
+      where: {
+        OR: [
+          {
+            receiverId: student.id,
+            status: "ACCEPTED"
           },
-          sender: {
-            include: {
-              notes: true
-            }
+          {
+            senderId: student.id,
+            status: "ACCEPTED"
+          }
+        ]
+      },
+      include: {
+        receiver: {
+          include: {
+            notes: true
+          }
+        },
+        sender: {
+          include: {
+            notes: true
           }
         }
-      });
-      const friends = friendRequests.reduce((acm, friendRequest, k) => {
-        if (friendRequest.sender.id !== student.id) {
-          acm.push(friendRequest.sender);
-        } else {
-          acm.push(friendRequest.receiver);
-        }
-        return acm;
-      }, []);
-      const friendsNotes = [];
-      friends.forEach((friend) => {
-        if (friend.notes.length === 0) return;
-        console.log(friend);
-        friendsNotes.push({
-          owner: friend.username,
-          notes: friend.notes
-        });
-      });
-      return friendsNotes;
+      }
     });
+    const friends = friendRequests.reduce((acm, friendRequest, k) => {
+      if (friendRequest.sender.id !== student.id) {
+        acm.push(friendRequest.sender);
+      } else {
+        acm.push(friendRequest.receiver);
+      }
+      return acm;
+    }, []);
+    const friendsNotes = [];
+    friends.forEach((friend) => {
+      if (friend.notes.length === 0) return;
+      console.log(friend);
+      friendsNotes.push({
+        owner: friend.username,
+        notes: friend.notes
+      });
+    });
+    return friendsNotes;
   }
 };
 // Annotate the CommonJS export names for ESM import in node:

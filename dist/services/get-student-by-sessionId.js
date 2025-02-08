@@ -16,26 +16,6 @@ var __copyProps = (to, from, except, desc) => {
   return to;
 };
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-var __async = (__this, __arguments, generator) => {
-  return new Promise((resolve, reject) => {
-    var fulfilled = (value) => {
-      try {
-        step(generator.next(value));
-      } catch (e) {
-        reject(e);
-      }
-    };
-    var rejected = (value) => {
-      try {
-        step(generator.throw(value));
-      } catch (e) {
-        reject(e);
-      }
-    };
-    var step = (x) => x.done ? resolve(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
-    step((generator = generator.apply(__this, __arguments)).next());
-  });
-};
 
 // src/services/get-student-by-sessionId.ts
 var get_student_by_sessionId_exports = {};
@@ -43,20 +23,36 @@ __export(get_student_by_sessionId_exports, {
   GetStudentBySessionIdService: () => GetStudentBySessionIdService
 });
 module.exports = __toCommonJS(get_student_by_sessionId_exports);
+
+// src/lib/redis.ts
+var import_redis = require("redis");
+var client = (0, import_redis.createClient)({
+  username: "default",
+  password: process.env.REDIS_PASSWORD,
+  socket: {
+    host: process.env.REDIS_HOST,
+    port: +process.env.REDIS_PORT
+  }
+});
+client.on("error", (err) => console.log("Redis Client Error:: ", err));
+client.connect();
+
+// src/services/get-student-by-sessionId.ts
 var GetStudentBySessionIdService = class {
   constructor(prisma) {
     this.prisma = prisma;
   }
-  execute(sessionId) {
-    return __async(this, null, function* () {
-      const student = yield this.prisma.student.findUnique({
-        where: {
-          sessionId
-        }
-      });
-      if (!student) throw new Error();
-      return student;
+  async execute(sessionId) {
+    const cachedStudent = await client.hGetAll(sessionId);
+    if (cachedStudent)
+      return cachedStudent;
+    const student = await this.prisma.student.findUnique({
+      where: {
+        sessionId
+      }
     });
+    if (!student) throw new Error();
+    return student;
   }
 };
 // Annotate the CommonJS export names for ESM import in node:

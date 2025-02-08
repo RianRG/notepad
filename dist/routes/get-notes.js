@@ -30,26 +30,6 @@ var __copyProps = (to, from, except, desc) => {
   return to;
 };
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-var __async = (__this, __arguments, generator) => {
-  return new Promise((resolve, reject) => {
-    var fulfilled = (value) => {
-      try {
-        step(generator.next(value));
-      } catch (e) {
-        reject(e);
-      }
-    };
-    var rejected = (value) => {
-      try {
-        step(generator.throw(value));
-      } catch (e) {
-        reject(e);
-      }
-    };
-    var step = (x) => x.done ? resolve(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
-    step((generator = generator.apply(__this, __arguments)).next());
-  });
-};
 
 // src/routes/get-notes.ts
 var get_notes_exports = {};
@@ -92,72 +72,82 @@ var GetNotesService = class {
   constructor(prisma) {
     this.prisma = prisma;
   }
-  execute(studentId) {
-    return __async(this, null, function* () {
-      const notes = yield this.prisma.note.findMany({
-        where: {
-          studentId
-        },
-        orderBy: {
-          createdAt: "desc"
-        }
-      });
-      const parsedNotes = notes.map((note) => {
-        const _a = note, { studentId: studentId2 } = _a, restOfAll = __objRest(_a, ["studentId"]);
-        return restOfAll;
-      });
-      return parsedNotes;
+  async execute(studentId) {
+    const notes = await this.prisma.note.findMany({
+      where: {
+        studentId
+      },
+      orderBy: {
+        createdAt: "desc"
+      }
     });
+    const parsedNotes = notes.map((note) => {
+      const _a = note, { studentId: studentId2 } = _a, restOfAll = __objRest(_a, ["studentId"]);
+      return restOfAll;
+    });
+    return parsedNotes;
   }
 };
+
+// src/lib/redis.ts
+var import_redis = require("redis");
+var client = (0, import_redis.createClient)({
+  username: "default",
+  password: process.env.REDIS_PASSWORD,
+  socket: {
+    host: process.env.REDIS_HOST,
+    port: +process.env.REDIS_PORT
+  }
+});
+client.on("error", (err) => console.log("Redis Client Error:: ", err));
+client.connect();
 
 // src/services/get-student-by-sessionId.ts
 var GetStudentBySessionIdService = class {
   constructor(prisma) {
     this.prisma = prisma;
   }
-  execute(sessionId) {
-    return __async(this, null, function* () {
-      const student = yield this.prisma.student.findUnique({
-        where: {
-          sessionId
-        }
-      });
-      if (!student) throw new Error();
-      return student;
+  async execute(sessionId) {
+    const cachedStudent = await client.hGetAll(sessionId);
+    if (cachedStudent)
+      return cachedStudent;
+    const student = await this.prisma.student.findUnique({
+      where: {
+        sessionId
+      }
     });
+    if (!student) throw new Error();
+    return student;
   }
 };
 
 // src/routes/get-notes.ts
-function GetNotesRoute(app) {
-  return __async(this, null, function* () {
-    app.get(
-      "/notes",
-      {
-        schema: {
-          // response: {
-          //   200: z.array(z.object({
-          //     title: z.string(),
-          //     content: z.string(),
-          //     isPrivate: z.boolean(),
-          //     createdAt: z.date(),
-          //   }))
-          // }
-        },
-        preHandler: [authorizeMiddleware]
+async function GetNotesRoute(app) {
+  app.get(
+    "/notes",
+    {
+      schema: {
+        // response: {
+        //   200: z.array(z.object({
+        //     title: z.string(),
+        //     content: z.string(),
+        //     isPrivate: z.boolean(),
+        //     createdAt: z.date(),
+        //   }))
+        // }
       },
-      (req, res) => __async(this, null, function* () {
-        const prismaRepository = new PrismaService();
-        const { sessionId } = req.auth;
-        const getNotesService = new GetNotesService(prismaRepository);
-        const getStudentBySessionIdService = new GetStudentBySessionIdService(prismaRepository);
-        const student = yield getStudentBySessionIdService.execute(sessionId);
-        const notes = yield getNotesService.execute(student.id);
-        return res.status(200).send(notes);
-      })
-    );
-  });
+      preHandler: [authorizeMiddleware]
+    },
+    async (req, res) => {
+      const prismaRepository = new PrismaService();
+      const { sessionId } = req.auth;
+      const getNotesService = new GetNotesService(prismaRepository);
+      const getStudentBySessionIdService = new GetStudentBySessionIdService(prismaRepository);
+      const student = await getStudentBySessionIdService.execute(sessionId);
+      const notes = await getNotesService.execute(student.id);
+      return res.status(200).send(notes);
+    }
+  );
 }
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {

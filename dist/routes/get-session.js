@@ -16,26 +16,6 @@ var __copyProps = (to, from, except, desc) => {
   return to;
 };
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-var __async = (__this, __arguments, generator) => {
-  return new Promise((resolve, reject) => {
-    var fulfilled = (value) => {
-      try {
-        step(generator.next(value));
-      } catch (e) {
-        reject(e);
-      }
-    };
-    var rejected = (value) => {
-      try {
-        step(generator.throw(value));
-      } catch (e) {
-        reject(e);
-      }
-    };
-    var step = (x) => x.done ? resolve(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
-    step((generator = generator.apply(__this, __arguments)).next());
-  });
-};
 
 // src/routes/get-session.ts
 var get_session_exports = {};
@@ -58,21 +38,35 @@ var PrismaService = class extends import_client.PrismaClient {
   }
 };
 
+// src/lib/redis.ts
+var import_redis = require("redis");
+var client = (0, import_redis.createClient)({
+  username: "default",
+  password: process.env.REDIS_PASSWORD,
+  socket: {
+    host: process.env.REDIS_HOST,
+    port: +process.env.REDIS_PORT
+  }
+});
+client.on("error", (err) => console.log("Redis Client Error:: ", err));
+client.connect();
+
 // src/services/get-student-by-sessionId.ts
 var GetStudentBySessionIdService = class {
   constructor(prisma) {
     this.prisma = prisma;
   }
-  execute(sessionId) {
-    return __async(this, null, function* () {
-      const student = yield this.prisma.student.findUnique({
-        where: {
-          sessionId
-        }
-      });
-      if (!student) throw new Error();
-      return student;
+  async execute(sessionId) {
+    const cachedStudent = await client.hGetAll(sessionId);
+    if (cachedStudent)
+      return cachedStudent;
+    const student = await this.prisma.student.findUnique({
+      where: {
+        sessionId
+      }
     });
+    if (!student) throw new Error();
+    return student;
   }
 };
 
@@ -92,17 +86,15 @@ var authorizeMiddleware = (req, res, done) => {
 };
 
 // src/routes/get-session.ts
-function GetSessionRoute(app) {
-  return __async(this, null, function* () {
-    app.get("/session", {
-      preHandler: [authorizeMiddleware]
-    }, (req, res) => __async(this, null, function* () {
-      const { sessionId } = req.auth;
-      const prismaRepository = new PrismaService();
-      const getStudentBySessionId = new GetStudentBySessionIdService(prismaRepository);
-      const student = yield getStudentBySessionId.execute(sessionId);
-      return res.status(200).send({ student });
-    }));
+async function GetSessionRoute(app) {
+  app.get("/session", {
+    preHandler: [authorizeMiddleware]
+  }, async (req, res) => {
+    const { sessionId } = req.auth;
+    const prismaRepository = new PrismaService();
+    const getStudentBySessionId = new GetStudentBySessionIdService(prismaRepository);
+    const student = await getStudentBySessionId.execute(sessionId);
+    return res.status(200).send({ student });
   });
 }
 // Annotate the CommonJS export names for ESM import in node:

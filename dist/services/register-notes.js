@@ -16,26 +16,6 @@ var __copyProps = (to, from, except, desc) => {
   return to;
 };
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-var __async = (__this, __arguments, generator) => {
-  return new Promise((resolve, reject) => {
-    var fulfilled = (value) => {
-      try {
-        step(generator.next(value));
-      } catch (e) {
-        reject(e);
-      }
-    };
-    var rejected = (value) => {
-      try {
-        step(generator.throw(value));
-      } catch (e) {
-        reject(e);
-      }
-    };
-    var step = (x) => x.done ? resolve(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
-    step((generator = generator.apply(__this, __arguments)).next());
-  });
-};
 
 // src/services/register-notes.ts
 var register_notes_exports = {};
@@ -47,16 +27,14 @@ var RegisterNotesService = class {
   constructor(prisma) {
     this.prisma = prisma;
   }
-  execute(_0) {
-    return __async(this, arguments, function* ({ title, content, isPrivate, studentId }) {
-      return yield this.prisma.note.create({
-        data: {
-          title,
-          content,
-          isPrivate,
-          studentId
-        }
-      });
+  async execute({ title, content, isPrivate, studentId }) {
+    return await this.prisma.note.create({
+      data: {
+        title,
+        content,
+        isPrivate,
+        studentId
+      }
     });
   }
 };

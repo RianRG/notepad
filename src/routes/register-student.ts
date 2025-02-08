@@ -1,4 +1,3 @@
-import {fastifyJwt} from "@fastify/jwt";
 import { PrismaService } from "../repositories/prisma/prisma-service";
 import { RegisterStudentService } from "../services/register-student";
 import { FastifyTypedInstance } from "../types";

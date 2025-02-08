@@ -16,26 +16,6 @@ var __copyProps = (to, from, except, desc) => {
   return to;
 };
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-var __async = (__this, __arguments, generator) => {
-  return new Promise((resolve, reject) => {
-    var fulfilled = (value) => {
-      try {
-        step(generator.next(value));
-      } catch (e) {
-        reject(e);
-      }
-    };
-    var rejected = (value) => {
-      try {
-        step(generator.throw(value));
-      } catch (e) {
-        reject(e);
-      }
-    };
-    var step = (x) => x.done ? resolve(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
-    step((generator = generator.apply(__this, __arguments)).next());
-  });
-};
 
 // src/routes/delete-note.ts
 var delete_note_exports = {};
@@ -78,70 +58,80 @@ var DeleteNoteService = class {
   constructor(prisma) {
     this.prisma = prisma;
   }
-  execute(noteId) {
-    return __async(this, null, function* () {
-      const note = yield this.prisma.note.findUnique({
-        where: {
-          id: noteId
-        }
-      });
-      if (!note)
-        throw new Error("Note not found!");
-      yield this.prisma.note.delete({
-        where: {
-          id: noteId
-        }
-      });
+  async execute(noteId) {
+    const note = await this.prisma.note.findUnique({
+      where: {
+        id: noteId
+      }
+    });
+    if (!note)
+      throw new Error("Note not found!");
+    await this.prisma.note.delete({
+      where: {
+        id: noteId
+      }
     });
   }
 };
+
+// src/lib/redis.ts
+var import_redis = require("redis");
+var client = (0, import_redis.createClient)({
+  username: "default",
+  password: process.env.REDIS_PASSWORD,
+  socket: {
+    host: process.env.REDIS_HOST,
+    port: +process.env.REDIS_PORT
+  }
+});
+client.on("error", (err) => console.log("Redis Client Error:: ", err));
+client.connect();
 
 // src/services/get-student-by-sessionId.ts
 var GetStudentBySessionIdService = class {
   constructor(prisma) {
     this.prisma = prisma;
   }
-  execute(sessionId) {
-    return __async(this, null, function* () {
-      const student = yield this.prisma.student.findUnique({
-        where: {
-          sessionId
-        }
-      });
-      if (!student) throw new Error();
-      return student;
+  async execute(sessionId) {
+    const cachedStudent = await client.hGetAll(sessionId);
+    if (cachedStudent)
+      return cachedStudent;
+    const student = await this.prisma.student.findUnique({
+      where: {
+        sessionId
+      }
     });
+    if (!student) throw new Error();
+    return student;
   }
 };
 
 // src/routes/delete-note.ts
 var import_zod = require("zod");
-function DeleteNoteRoute(app) {
-  return __async(this, null, function* () {
-    app.delete(
-      "/notes/:noteId",
-      {
-        preHandler: [authorizeMiddleware],
-        schema: {
-          params: import_zod.z.object({
-            noteId: import_zod.z.string()
-          })
-        }
-      },
-      (req, res) => __async(this, null, function* () {
-        const { sessionId } = req.auth;
-        const { noteId } = req.params;
-        const prismaRepository = new PrismaService();
-        const deleteNoteService = new DeleteNoteService(prismaRepository);
-        const getStudentBySessionIdService = new GetStudentBySessionIdService(prismaRepository);
-        const student = yield getStudentBySessionIdService.execute(sessionId);
-        if (!student)
-          return res.status(400).send({ msg: "Student not found!" });
-        yield deleteNoteService.execute(noteId);
-        return res.status(200).send({ msg: "Note deleted succesfully!" });
-      })
-    );
-  });
+async function DeleteNoteRoute(app) {
+  app.delete(
+    "/notes/:noteId",
+    {
+      preHandler: [authorizeMiddleware],
+      schema: {
+        params: import_zod.z.object({
+          noteId: import_zod.z.string()
+        })
+      }
+    },
+    async (req, res) => {
+      const { sessionId } = req.auth;
+      const { noteId } = req.params;
+      const prismaRepository = new PrismaService();
+      const deleteNoteService = new DeleteNoteService(prismaRepository);
+      const getStudentBySessionIdService = new GetStudentBySessionIdService(prismaRepository);
+      const student = await getStudentBySessionIdService.execute(sessionId);
+      if (!student)
+        return res.status(400).send({ msg: "Student not found!" });
+      await deleteNoteService.execute(noteId);
+      return res.status(200).send({ msg: "Note deleted succesfully!" });
+    }
+  );
 }
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {

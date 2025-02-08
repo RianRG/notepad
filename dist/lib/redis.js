@@ -17,32 +17,24 @@ var __copyProps = (to, from, except, desc) => {
 };
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-// src/services/delete-note.ts
-var delete_note_exports = {};
-__export(delete_note_exports, {
-  DeleteNoteService: () => DeleteNoteService
+// src/lib/redis.ts
+var redis_exports = {};
+__export(redis_exports, {
+  client: () => client
 });
-module.exports = __toCommonJS(delete_note_exports);
-var DeleteNoteService = class {
-  constructor(prisma) {
-    this.prisma = prisma;
+module.exports = __toCommonJS(redis_exports);
+var import_redis = require("redis");
+var client = (0, import_redis.createClient)({
+  username: "default",
+  password: process.env.REDIS_PASSWORD,
+  socket: {
+    host: process.env.REDIS_HOST,
+    port: +process.env.REDIS_PORT
   }
-  async execute(noteId) {
-    const note = await this.prisma.note.findUnique({
-      where: {
-        id: noteId
-      }
-    });
-    if (!note)
-      throw new Error("Note not found!");
-    await this.prisma.note.delete({
-      where: {
-        id: noteId
-      }
-    });
-  }
-};
+});
+client.on("error", (err) => console.log("Redis Client Error:: ", err));
+client.connect();
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
-  DeleteNoteService
+  client
 });

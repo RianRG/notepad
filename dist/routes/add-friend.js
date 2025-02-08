@@ -16,26 +16,6 @@ var __copyProps = (to, from, except, desc) => {
   return to;
 };
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-var __async = (__this, __arguments, generator) => {
-  return new Promise((resolve, reject) => {
-    var fulfilled = (value) => {
-      try {
-        step(generator.next(value));
-      } catch (e) {
-        reject(e);
-      }
-    };
-    var rejected = (value) => {
-      try {
-        step(generator.throw(value));
-      } catch (e) {
-        reject(e);
-      }
-    };
-    var step = (x) => x.done ? resolve(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
-    step((generator = generator.apply(__this, __arguments)).next());
-  });
-};
 
 // src/routes/add-friend.ts
 var add_friend_exports = {};
@@ -78,129 +58,139 @@ var AddFriendService = class {
   constructor(prisma) {
     this.prisma = prisma;
   }
-  execute(requesterName, receiverName) {
-    return __async(this, null, function* () {
-      if (requesterName === receiverName)
-        throw new Error("You cannot add yourself!");
-      const requester = yield this.prisma.student.findUnique({
-        where: {
-          username: requesterName
-        },
-        include: {
-          friendRequestsReceived: true,
-          friendRequestsSent: true
-        }
-      });
-      if (!requester)
-        throw new Error("Student not found!");
-      const receiver = yield this.prisma.student.findUnique({
-        where: {
-          username: receiverName
-        },
-        include: {
-          friendRequestsReceived: true,
-          friendRequestsSent: true
-        }
-      });
-      if (!receiver)
-        throw new Error("Student not found!");
-      const isAlreadyFriend = yield this.prisma.friendRequest.findFirst({
-        where: {
-          OR: [
-            {
-              senderId: requester.id,
-              receiverId: receiver.id,
-              status: "ACCEPTED"
-            },
-            {
-              senderId: receiver.id,
-              receiverId: requester.id,
-              status: "ACCEPTED"
-            }
-          ]
-        }
-      });
-      if (isAlreadyFriend)
-        throw new Error(`You and ${receiverName} are already friends!`);
-      const isAlreadySent = receiver.friendRequestsReceived.filter((request) => {
-        return request.senderId === requester.id;
-      });
-      if (isAlreadySent.length > 0)
-        throw new Error(`You have already sent a request to ${receiverName}`);
-      const isAlreadyReceived = receiver.friendRequestsSent.filter((request) => {
-        return request.receiverId === requester.id;
-      });
-      if (isAlreadyReceived.length > 0) {
-        if (isAlreadyReceived[0].status !== "REJECTED") {
-          yield this.prisma.friendRequest.update({
-            where: {
-              id: isAlreadyReceived[0].id
-            },
-            data: {
-              status: "ACCEPTED"
-            }
-          });
-        } else {
-          throw new Error(`Unfortunately, this friendship is BLOCKED :(`);
-        }
-        return 2;
+  async execute(requesterName, receiverName) {
+    if (requesterName === receiverName)
+      throw new Error("You cannot add yourself!");
+    const requester = await this.prisma.student.findUnique({
+      where: {
+        username: requesterName
+      },
+      include: {
+        friendRequestsReceived: true,
+        friendRequestsSent: true
       }
-      yield this.prisma.friendRequest.create({
-        data: {
-          receiverId: receiver.id,
-          senderId: requester.id,
-          status: "PENDING"
-        }
-      });
-      return 3;
     });
+    if (!requester)
+      throw new Error("Student not found!");
+    const receiver = await this.prisma.student.findUnique({
+      where: {
+        username: receiverName
+      },
+      include: {
+        friendRequestsReceived: true,
+        friendRequestsSent: true
+      }
+    });
+    if (!receiver)
+      throw new Error("Student not found!");
+    const isAlreadyFriend = await this.prisma.friendRequest.findFirst({
+      where: {
+        OR: [
+          {
+            senderId: requester.id,
+            receiverId: receiver.id,
+            status: "ACCEPTED"
+          },
+          {
+            senderId: receiver.id,
+            receiverId: requester.id,
+            status: "ACCEPTED"
+          }
+        ]
+      }
+    });
+    if (isAlreadyFriend)
+      throw new Error(`You and ${receiverName} are already friends!`);
+    const isAlreadySent = receiver.friendRequestsReceived.filter((request) => {
+      return request.senderId === requester.id;
+    });
+    if (isAlreadySent.length > 0)
+      throw new Error(`You have already sent a request to ${receiverName}`);
+    const isAlreadyReceived = receiver.friendRequestsSent.filter((request) => {
+      return request.receiverId === requester.id;
+    });
+    if (isAlreadyReceived.length > 0) {
+      if (isAlreadyReceived[0].status !== "REJECTED") {
+        await this.prisma.friendRequest.update({
+          where: {
+            id: isAlreadyReceived[0].id
+          },
+          data: {
+            status: "ACCEPTED"
+          }
+        });
+      } else {
+        throw new Error(`Unfortunately, this friendship is BLOCKED :(`);
+      }
+      return 2;
+    }
+    await this.prisma.friendRequest.create({
+      data: {
+        receiverId: receiver.id,
+        senderId: requester.id,
+        status: "PENDING"
+      }
+    });
+    return 3;
   }
 };
+
+// src/lib/redis.ts
+var import_redis = require("redis");
+var client = (0, import_redis.createClient)({
+  username: "default",
+  password: process.env.REDIS_PASSWORD,
+  socket: {
+    host: process.env.REDIS_HOST,
+    port: +process.env.REDIS_PORT
+  }
+});
+client.on("error", (err) => console.log("Redis Client Error:: ", err));
+client.connect();
 
 // src/services/get-student-by-sessionId.ts
 var GetStudentBySessionIdService = class {
   constructor(prisma) {
     this.prisma = prisma;
   }
-  execute(sessionId) {
-    return __async(this, null, function* () {
-      const student = yield this.prisma.student.findUnique({
-        where: {
-          sessionId
-        }
-      });
-      if (!student) throw new Error();
-      return student;
+  async execute(sessionId) {
+    const cachedStudent = await client.hGetAll(sessionId);
+    if (cachedStudent)
+      return cachedStudent;
+    const student = await this.prisma.student.findUnique({
+      where: {
+        sessionId
+      }
     });
+    if (!student) throw new Error();
+    return student;
   }
 };
 
 // src/routes/add-friend.ts
 var import_zod = require("zod");
-function AddFriendRoute(app) {
-  return __async(this, null, function* () {
-    app.post("/add/:friendName", {
-      preHandler: [authorizeMiddleware],
-      schema: {
-        params: import_zod.z.object({
-          friendName: import_zod.z.string()
-        }),
-        response: {
-          201: import_zod.z.object({
-            msg: import_zod.z.string()
-          })
-        }
+async function AddFriendRoute(app) {
+  app.post("/add/:friendName", {
+    preHandler: [authorizeMiddleware],
+    schema: {
+      params: import_zod.z.object({
+        friendName: import_zod.z.string()
+      }),
+      response: {
+        201: import_zod.z.object({
+          msg: import_zod.z.string()
+        })
       }
-    }, (req, res) => __async(this, null, function* () {
-      const { friendName } = req.params;
-      const { sessionId } = req.auth;
-      const prismaRepository = new PrismaService();
-      const getStudentBySessionIdService = new GetStudentBySessionIdService(prismaRepository);
-      const addFriend = new AddFriendService(prismaRepository);
-      const student = yield getStudentBySessionIdService.execute(sessionId);
-      yield addFriend.execute(student.username, friendName);
-      return res.status(201).send({ msg: "Friend request sent!" });
-    }));
+    }
+  }, async (req, res) => {
+    const { friendName } = req.params;
+    const { sessionId } = req.auth;
+    const prismaRepository = new PrismaService();
+    const getStudentBySessionIdService = new GetStudentBySessionIdService(prismaRepository);
+    const addFriend = new AddFriendService(prismaRepository);
+    const student = await getStudentBySessionIdService.execute(sessionId);
+    await addFriend.execute(student.username, friendName);
+    return res.status(201).send({ msg: "Friend request sent!" });
   });
 }
 // Annotate the CommonJS export names for ESM import in node:

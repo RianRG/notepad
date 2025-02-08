@@ -16,26 +16,6 @@ var __copyProps = (to, from, except, desc) => {
   return to;
 };
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-var __async = (__this, __arguments, generator) => {
-  return new Promise((resolve, reject) => {
-    var fulfilled = (value) => {
-      try {
-        step(generator.next(value));
-      } catch (e) {
-        reject(e);
-      }
-    };
-    var rejected = (value) => {
-      try {
-        step(generator.throw(value));
-      } catch (e) {
-        reject(e);
-      }
-    };
-    var step = (x) => x.done ? resolve(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
-    step((generator = generator.apply(__this, __arguments)).next());
-  });
-};
 
 // src/routes/login-student.ts
 var login_student_exports = {};
@@ -63,16 +43,14 @@ var GetStudentByEmailService = class {
   constructor(prisma) {
     this.prisma = prisma;
   }
-  execute(email) {
-    return __async(this, null, function* () {
-      const student = yield this.prisma.student.findUnique({
-        where: {
-          email
-        }
-      });
-      if (!student) throw new Error("Student not found!");
-      return student;
+  async execute(email) {
+    const student = await this.prisma.student.findUnique({
+      where: {
+        email
+      }
     });
+    if (!student) throw new Error("Student not found!");
+    return student;
   }
 };
 
@@ -80,58 +58,81 @@ var GetStudentByEmailService = class {
 var import_zod = require("zod");
 var import_bcrypt = require("bcrypt");
 
+// src/lib/redis.ts
+var import_redis = require("redis");
+var client = (0, import_redis.createClient)({
+  username: "default",
+  password: process.env.REDIS_PASSWORD,
+  socket: {
+    host: process.env.REDIS_HOST,
+    port: +process.env.REDIS_PORT
+  }
+});
+client.on("error", (err) => console.log("Redis Client Error:: ", err));
+client.connect();
+
 // src/services/update-sessionid.ts
 var UpdateSessionIdService = class {
   constructor(prisma) {
     this.prisma = prisma;
   }
-  execute(sessionId, id) {
-    return __async(this, null, function* () {
-      return yield this.prisma.student.update({
-        where: {
-          id
-        },
-        data: {
-          sessionId
-        }
-      });
+  async execute(sessionId, id) {
+    const oldStudent = await this.prisma.student.findUnique({
+      where: {
+        id
+      }
     });
+    if (!oldStudent) throw new Error("Student not found!");
+    const updatedStudent = await this.prisma.student.update({
+      where: {
+        id
+      },
+      data: {
+        sessionId
+      }
+    });
+    await client.del(oldStudent.sessionId);
+    await client.hSet(sessionId, {
+      username: updatedStudent.username,
+      email: updatedStudent.email,
+      password: updatedStudent.password,
+      sessionId
+    });
+    return updatedStudent;
   }
 };
 
 // src/routes/login-student.ts
-function LoginStudentRoute(app) {
-  return __async(this, null, function* () {
-    app.post("/login", {
-      schema: {
-        body: import_zod.z.object({
-          email: import_zod.z.string().email(),
-          password: import_zod.z.string().min(6)
-        })
-      }
-    }, (req, res) => __async(this, null, function* () {
-      const { email, password } = req.body;
-      const prismaRepository = new PrismaService();
-      const getStudentByEmailService = new GetStudentByEmailService(prismaRepository);
-      const updateSessionIdService = new UpdateSessionIdService(prismaRepository);
-      const student = yield getStudentByEmailService.execute(email);
-      if (!(yield (0, import_bcrypt.compare)(password, student.password))) {
-        return res.status(401).send({ msg: "Email or password incorrect!" });
-      }
-      const sessionId = app.jwt.sign({ user: student.username });
-      res.setCookie("sessionId", sessionId, {
-        path: "/",
-        httpOnly: true,
-        signed: true,
-        sameSite: "none",
-        secure: true,
-        maxAge: 1e3 * 3600 * 24 * 7
-        // 7 days
-      });
-      const cookie = app.signCookie(sessionId);
-      const loggedStudent = yield updateSessionIdService.execute(cookie, student.id);
-      return res.status(201).send({ login: loggedStudent });
-    }));
+async function LoginStudentRoute(app) {
+  app.post("/login", {
+    schema: {
+      body: import_zod.z.object({
+        email: import_zod.z.string().email(),
+        password: import_zod.z.string().min(6)
+      })
+    }
+  }, async (req, res) => {
+    const { email, password } = req.body;
+    const prismaRepository = new PrismaService();
+    const getStudentByEmailService = new GetStudentByEmailService(prismaRepository);
+    const updateSessionIdService = new UpdateSessionIdService(prismaRepository);
+    const student = await getStudentByEmailService.execute(email);
+    if (!await (0, import_bcrypt.compare)(password, student.password)) {
+      return res.status(401).send({ msg: "Email or password incorrect!" });
+    }
+    const sessionId = app.jwt.sign({ user: student.username });
+    res.setCookie("sessionId", sessionId, {
+      path: "/",
+      httpOnly: true,
+      signed: true,
+      sameSite: "none",
+      secure: true,
+      maxAge: 1e3 * 3600 * 24 * 7
+      // 7 days
+    });
+    const cookie = app.signCookie(sessionId);
+    const loggedStudent = await updateSessionIdService.execute(cookie, student.id);
+    return res.status(201).send({ login: loggedStudent });
   });
 }
 // Annotate the CommonJS export names for ESM import in node:

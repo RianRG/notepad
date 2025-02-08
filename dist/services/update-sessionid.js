@@ -16,26 +16,6 @@ var __copyProps = (to, from, except, desc) => {
   return to;
 };
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-var __async = (__this, __arguments, generator) => {
-  return new Promise((resolve, reject) => {
-    var fulfilled = (value) => {
-      try {
-        step(generator.next(value));
-      } catch (e) {
-        reject(e);
-      }
-    };
-    var rejected = (value) => {
-      try {
-        step(generator.throw(value));
-      } catch (e) {
-        reject(e);
-      }
-    };
-    var step = (x) => x.done ? resolve(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
-    step((generator = generator.apply(__this, __arguments)).next());
-  });
-};
 
 // src/services/update-sessionid.ts
 var update_sessionid_exports = {};
@@ -43,21 +23,48 @@ __export(update_sessionid_exports, {
   UpdateSessionIdService: () => UpdateSessionIdService
 });
 module.exports = __toCommonJS(update_sessionid_exports);
+
+// src/lib/redis.ts
+var import_redis = require("redis");
+var client = (0, import_redis.createClient)({
+  username: "default",
+  password: process.env.REDIS_PASSWORD,
+  socket: {
+    host: process.env.REDIS_HOST,
+    port: +process.env.REDIS_PORT
+  }
+});
+client.on("error", (err) => console.log("Redis Client Error:: ", err));
+client.connect();
+
+// src/services/update-sessionid.ts
 var UpdateSessionIdService = class {
   constructor(prisma) {
     this.prisma = prisma;
   }
-  execute(sessionId, id) {
-    return __async(this, null, function* () {
-      return yield this.prisma.student.update({
-        where: {
-          id
-        },
-        data: {
-          sessionId
-        }
-      });
+  async execute(sessionId, id) {
+    const oldStudent = await this.prisma.student.findUnique({
+      where: {
+        id
+      }
     });
+    if (!oldStudent) throw new Error("Student not found!");
+    const updatedStudent = await this.prisma.student.update({
+      where: {
+        id
+      },
+      data: {
+        sessionId
+      }
+    });
+    await client.del(oldStudent.sessionId);
+    await client.hSet(sessionId, {
+      username: updatedStudent.username,
+      email: updatedStudent.email,
+      password: updatedStudent.password,
+      sessionId
+    });
+    return updatedStudent;
   }
 };
 // Annotate the CommonJS export names for ESM import in node:
