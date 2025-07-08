@@ -1,5 +1,5 @@
 import { PrismaService } from "../repositories/prisma/prisma-service";
-import { client } from "../lib/redis";
+// import { client } from "../lib/redis";
 
 interface RegisterStudentDTO{
   username: string
@@ -40,13 +40,13 @@ export class RegisterStudentService{
       }
     })
 
-    await client.hSet(sessionId, {
-      id: student.id,
-      username,
-      email,
-      password,
-      createdAt: student.createdAt.toString()
-    })
+    // await client.hSet(sessionId, {
+    //   id: student.id,
+    //   username,
+    //   email,
+    //   password,
+    //   createdAt: student.createdAt.toString()
+    // })
 
     return student;
   }

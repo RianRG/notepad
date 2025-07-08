@@ -1,5 +1,5 @@
 import { PrismaService } from "../repositories/prisma/prisma-service";
-import { client } from "../lib/redis";
+// import { client } from "../lib/redis";
 
 
 export class GetStudentBySessionIdService{
@@ -7,10 +7,10 @@ export class GetStudentBySessionIdService{
 
   async execute(sessionId: string){
 
-    const cachedStudent = await client.hGetAll(sessionId)
-    console.log(cachedStudent)
-    if(cachedStudent)
-      return cachedStudent;
+    // const cachedStudent = await client.hGetAll(sessionId)
+    // console.log(cachedStudent)
+    // if(cachedStudent)
+    //   return cachedStudent;
 
     const student = await this.prisma.student.findUnique({
       where: {

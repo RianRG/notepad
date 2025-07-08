@@ -1,4 +1,4 @@
-import { client } from "../lib/redis";
+// import { client } from "../lib/redis";
 import { PrismaService } from "../repositories/prisma/prisma-service";
 
 export class UpdateSessionIdService{
@@ -21,17 +21,17 @@ export class UpdateSessionIdService{
         sessionId
       }
     })
-    if(await client.hGetAll(oldStudent.sessionId))
-      await client.del(oldStudent.sessionId)
+    // if(await client.hGetAll(oldStudent.sessionId))
+      // await client.del(oldStudent.sessionId)
     
-    await client.hSet(sessionId, {
-      id: updatedStudent.id,
-      username: updatedStudent.username,
-      email: updatedStudent.email,
-      password: updatedStudent.password,
-      sessionId,
-      createdAt: updatedStudent.createdAt.toString(),
-    })
+    // await client.hSet(sessionId, {
+    //   id: updatedStudent.id,
+    //   username: updatedStudent.username,
+    //   email: updatedStudent.email,
+    //   password: updatedStudent.password,
+    //   sessionId,
+    //   createdAt: updatedStudent.createdAt.toString(),
+    // })
 
     return updatedStudent;
   }
