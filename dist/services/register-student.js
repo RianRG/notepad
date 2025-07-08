@@ -23,21 +23,6 @@ __export(register_student_exports, {
   RegisterStudentService: () => RegisterStudentService
 });
 module.exports = __toCommonJS(register_student_exports);
-
-// src/lib/redis.ts
-var import_redis = require("redis");
-var client = (0, import_redis.createClient)({
-  username: "default",
-  password: process.env.REDIS_PASSWORD,
-  socket: {
-    host: process.env.REDIS_HOST,
-    port: +process.env.REDIS_PORT
-  }
-});
-client.on("error", (err) => console.log("Redis Client Error:: ", err));
-client.connect();
-
-// src/services/register-student.ts
 var RegisterStudentService = class {
   constructor(prisma) {
     this.prisma = prisma;
@@ -62,13 +47,6 @@ var RegisterStudentService = class {
         password,
         sessionId
       }
-    });
-    await client.hSet(sessionId, {
-      id: student.id,
-      username,
-      email,
-      password,
-      createdAt: student.createdAt.toString()
     });
     return student;
   }

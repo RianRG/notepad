@@ -38,19 +38,6 @@ var PrismaService = class extends import_client.PrismaClient {
   }
 };
 
-// src/lib/redis.ts
-var import_redis = require("redis");
-var client = (0, import_redis.createClient)({
-  username: "default",
-  password: process.env.REDIS_PASSWORD,
-  socket: {
-    host: process.env.REDIS_HOST,
-    port: +process.env.REDIS_PORT
-  }
-});
-client.on("error", (err) => console.log("Redis Client Error:: ", err));
-client.connect();
-
 // src/services/register-student.ts
 var RegisterStudentService = class {
   constructor(prisma) {
@@ -77,13 +64,6 @@ var RegisterStudentService = class {
         sessionId
       }
     });
-    await client.hSet(sessionId, {
-      id: student.id,
-      username,
-      email,
-      password,
-      createdAt: student.createdAt.toString()
-    });
     return student;
   }
 };
@@ -91,35 +71,6 @@ var RegisterStudentService = class {
 // src/routes/register-student.ts
 var import_bcrypt = require("bcrypt");
 var import_zod = require("zod");
-
-// src/services/registered-email.ts
-var import_resend = require("resend");
-var resend = new import_resend.Resend(process.env.RESEND_KEY);
-var RegisteredEmailService = class {
-  async execute(email, username) {
-    const info = resend.emails.send({
-      from: `Fotepad \u{1F601} <${process.env.EMAIL_USER}>`,
-      to: `${email}`,
-      subject: `Hello, ${username}`,
-      text: "Account created succesfully!",
-      html: `
-      <html>
-        <head>
-          <meta charset="UTF-8">
-        </head>
-        <body>
-          <h1>Congratulations, your account was succesfully created!</h1>
-          <p>Now you can prove the max efficiency of your notes, welcome to Fotepad!</p>
-        </body>
-      </html>
-      `
-    }).then((msg) => console.log(msg)).catch((err) => console.log(err));
-    console.log(info);
-    return info;
-  }
-};
-
-// src/routes/register-student.ts
 async function RegisterStudentRoute(app) {
   app.post("/students/register", {
     schema: {
@@ -151,8 +102,6 @@ async function RegisterStudentRoute(app) {
     });
     const cookie = app.signCookie(sessionId);
     const student = await registerStudentService.execute({ username, email, password: hashedPassword, sessionId: cookie });
-    const registeredEmailService = new RegisteredEmailService();
-    await registeredEmailService.execute(email, username);
     return res.status(201).send({ id: student.id });
   });
 }

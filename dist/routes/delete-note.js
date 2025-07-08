@@ -74,29 +74,12 @@ var DeleteNoteService = class {
   }
 };
 
-// src/lib/redis.ts
-var import_redis = require("redis");
-var client = (0, import_redis.createClient)({
-  username: "default",
-  password: process.env.REDIS_PASSWORD,
-  socket: {
-    host: process.env.REDIS_HOST,
-    port: +process.env.REDIS_PORT
-  }
-});
-client.on("error", (err) => console.log("Redis Client Error:: ", err));
-client.connect();
-
 // src/services/get-student-by-sessionId.ts
 var GetStudentBySessionIdService = class {
   constructor(prisma) {
     this.prisma = prisma;
   }
   async execute(sessionId) {
-    const cachedStudent = await client.hGetAll(sessionId);
-    console.log(cachedStudent);
-    if (cachedStudent)
-      return cachedStudent;
     const student = await this.prisma.student.findUnique({
       where: {
         sessionId

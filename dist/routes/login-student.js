@@ -58,19 +58,6 @@ var GetStudentByEmailService = class {
 var import_zod = require("zod");
 var import_bcrypt = require("bcrypt");
 
-// src/lib/redis.ts
-var import_redis = require("redis");
-var client = (0, import_redis.createClient)({
-  username: "default",
-  password: process.env.REDIS_PASSWORD,
-  socket: {
-    host: process.env.REDIS_HOST,
-    port: +process.env.REDIS_PORT
-  }
-});
-client.on("error", (err) => console.log("Redis Client Error:: ", err));
-client.connect();
-
 // src/services/update-sessionid.ts
 var UpdateSessionIdService = class {
   constructor(prisma) {
@@ -90,16 +77,6 @@ var UpdateSessionIdService = class {
       data: {
         sessionId
       }
-    });
-    if (await client.hGetAll(oldStudent.sessionId))
-      await client.del(oldStudent.sessionId);
-    await client.hSet(sessionId, {
-      id: updatedStudent.id,
-      username: updatedStudent.username,
-      email: updatedStudent.email,
-      password: updatedStudent.password,
-      sessionId,
-      createdAt: updatedStudent.createdAt.toString()
     });
     return updatedStudent;
   }
